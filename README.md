@@ -1,4 +1,4 @@
 mods_dispo
 ==========
 
-Dispositions module groups
+Dispositions module groups based on Simbio3
