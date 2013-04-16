@@ -26,7 +26,7 @@ class Disposisi extends SimbioModel {
   public static function cbStatus($obj_db, $_result_row, $obj_sqlgrid) {
     if ($_result_row['Disposisi'] == '1') {
       $_status = '<span class="label label-success">V</span> <a href="./print_disposisi.php?id='.$_result_row['id_surat'].'" class="icon-print" title="Cetak lembar disposisi">&nbsp;</a>';
-      $_status .= ' <a href="./index.php?p=Disposisi/openfile/'.$_result_row['id_surat'].'" target="blank" class="icon-folder-open">&nbsp;</a>';
+      // $_status = '<span class="label label-success">V</span> <a href="./index.php?p=Disposisi/cetak/'.$_result_row['id_surat'].'" class="icon-print">&nbsp;</a>';
     } else {
       $_status = '<span class="label label-warning" title="Belum ada">X</span>';
     }
@@ -81,7 +81,6 @@ class Disposisi extends SimbioModel {
       'beri tanggapan',
       'daftar tanggapan',
       'hapus tanggapan',
-      'ubah tanggapan',
       'upload file surat',
       'hapus file surat'
     );
@@ -244,10 +243,10 @@ class Disposisi extends SimbioModel {
     }
     $_datagrid->setSQLCriteria($_criteria);
     // built the datagrid
-    $_datagrid->create('sids_disposisi AS d '.
-      'LEFT JOIN sids_status AS st ON d.status=st.id_status '.
-      'LEFT JOIN sids_surat_masuk AS s ON d.id_surat=s.id_surat '.
-      'LEFT JOIN sids_disposisi_unit_kerja AS du ON d.id_disposisi=du.id_disposisi');
+    $_datagrid->create('sids_disposisi AS d
+      LEFT JOIN sids_status AS st ON d.status=st.id_status
+      LEFT JOIN sids_surat_masuk AS s ON d.id_surat=s.id_surat
+      LEFT JOIN sids_disposisi_unit_kerja AS du ON d.id_disposisi=du.id_disposisi');
 
     $_output .= $_datagrid->build();
 
@@ -283,8 +282,8 @@ class Disposisi extends SimbioModel {
     $_datagrid->setPrimaryKeys(array('id_tanggapan'));
     // set record actions
     $_action['Del.'] = '<input type="checkbox" name="record[]" value="{rowIDs}" />';
-    // $_action['Dtl.'] = '<a class="datagrid-links" href="index.php?p=disposisi/detaildisposisi/{rowIDs}"><b class="icon-list-detail"></b></a>';
-    $_action['Edit'] = '<a class="datagrid-links" href="index.php?p=disposisi/updatetanggapan/0/{rowIDs}"><b class="icon-pencil"></b></a>';
+    $_action['Dtl.'] = '<a class="datagrid-links" href="index.php?p=disposisi/detaildisposisi/{rowIDs}"><b class="icon-list-detail"></b></a>';
+    $_action['Edit'] = '<a class="datagrid-links" href="index.php?p=disposisi/updatedisposisi/0/{rowIDs}"><b class="icon-pencil"></b></a>';
     $_datagrid->setRowActions($_action);
     // set multiple record action options
     $_action_options[] = array('0', 'Pilih tindakan');
@@ -939,21 +938,6 @@ class Disposisi extends SimbioModel {
 
   }
 
-  public function openFile(&$simbio, $str_args) {
-    $_id_surat = $str_args;
-    // query data file terkait surat ke database
-    $_file_surat = '<div class="alert alert-info datagrid-info">Ditemukan berkas lampiran: </div>';
-    $_file_surat .= '<table id="daftarFile" class="table table-striped table-bordered table-condensed">';
-    $_file_surat .= '<thead><tr><th>Nama berkas</th><th>Ukuran</th><th>&nbsp;</th></tr></thead><tbody>';
-    foreach ($this->dataFileSurat($simbio, $_id_surat) as $_data_surat) {
-      $_file_surat .= '<tr><td>'.$_data_surat['namafile'].'</td><td>'.( round($_data_surat['file_size']/(1024*1024), 2) ).' MB</td><td><a class="btn btn-mini btn-info" href="./files/surat/'.$_data_surat['namafile'].'" >Baca/Lihat</a> ';
-      $_file_surat .= '<a class="btn btn-mini btn-warning" href="javascript:window.close()">Kembali/Tutup</a></td></tr>';
-    }
-    $_file_surat .= '</tbody></table>';
-    $simbio->loadView($_file_surat, 'SIDS');
-
-  }
-
   public function statistik(&$simbio, $str_args) {
 	$_statistic = '';
 	$_statistic .='<div class="alert alert-success"><h4>STATISTIK Sistem Informasi Disposisi Surat (per '.date('d M Y').')</h4><br />';
@@ -961,7 +945,7 @@ class Disposisi extends SimbioModel {
 
 	// jumlah surat masuk
 	$_sql_sekretaris = 'SELECT *
-		FROM sids_surat_masuk ORDER BY tgl_surat DESC';
+		FROM sids_surat_masuk';
     $_result_q = $simbio->dbQuery($_sql_sekretaris);
     $_result_no = $_result_q->num_rows;
 	$_statistic .='<div class="accordion-group"><div class="accordion-heading">
@@ -969,17 +953,14 @@ class Disposisi extends SimbioModel {
 		<i class="icon-tag"></i>&nbsp;Jumlah surat masuk : <strong>'.$_result_no.'</strong></a></div>';
 	$_statistic .='<div id="stat_one" class="accordion-body collapse">
 		<div class="accordion-inner"><ul>';
-	$c=0;
-	$_statistic .= 'Menampilakan 10 surat terbaru<br />';
-	while ($_result_d = $_result_q->fetch_assoc() AND $c < 10) {
+	while ($_result_d = $_result_q->fetch_assoc()) {
 		$_statistic .= '<li>Tgl '.$_result_d['tgl_surat'].' dari '.$_result_d['pengirim']. ' tentang '.$_result_d['perihal'].'</li>';
-		$c = $c + 1;
 	}
 	$_statistic .='</ul></div></div></div>';
 	// jumlah disposisi yg belum ditanggapi pimpinan
 	$_sql_sekretaris = 'SELECT sm.*
 		FROM sids_surat_masuk  as sm left join sids_disposisi as d ON sm.id_surat = d.id_surat
-		WHERE d.perintah is NULL ORDER BY sm.tgl_surat DESC';
+		WHERE d.perintah is NULL';
     $_result_q = $simbio->dbQuery($_sql_sekretaris);
     $_result_no = $_result_q->num_rows;
 	$_statistic .='<div class="accordion-group"><div class="accordion-heading">
@@ -987,11 +968,8 @@ class Disposisi extends SimbioModel {
 		<i class="icon-tag"></i>&nbsp;Jumlah surat masuk belum dilengkapi disposisi : <strong>'.$_result_no.'</strong></a></div>';
 	$_statistic .='<div id="stat_two" class="accordion-body collapse">
 		<div class="accordion-inner"><ul>';
-	$c=0;
-	$_statistic .= 'Menampilakan 10 surat terbaru belum ada disposisi<br />';
-	while ($_result_d = $_result_q->fetch_assoc() AND $c < 10) {
+	while ($_result_d = $_result_q->fetch_assoc()) {
 		$_statistic .= '<li>Tgl '.$_result_d['tgl_surat'].' dari '.$_result_d['pengirim']. ' tentang '.$_result_d['perihal'].'</li>';
-		$c = $c + 1;
 	}
 	$_statistic .='</ul></div></div></div>';
 
@@ -1362,7 +1340,7 @@ class Disposisi extends SimbioModel {
    * @param   string    $str_args: method main argument
    * @return  void
    */
-  public function updateTanggapan(&$simbio, $str_args) {
+  private function updateTanggapan(&$simbio, $str_args) {
     if (!User::isUserLogin('beri tanggapan')) {
       // User::login($simbio, $str_args);
       return false;
@@ -1375,24 +1353,19 @@ class Disposisi extends SimbioModel {
     $_disposisi_d = $_disposisi_q->fetch_assoc();
     // ID tanggapan
     if (isset($_ids[1])) {
-      $_id_tanggapan = (integer)trim($_ids[1]);
+    $_id_tanggapan = (integer)trim($_ids[1]);
     } else {
-      $_id_tanggapan = 0;
+    $_id_tanggapan = 0;
     }
     $_tanggapan_q = $simbio->dbQuery('SELECT tgp.*, uk.* FROM {tanggapan_unit} AS tgp
-      LEFT JOIN {unit_kerja} AS uk ON tgp.id_unit=uk.id_unit
-      WHERE id_tanggapan=%d', $_id_tanggapan);
+    LEFT JOIN {unit_kerja} AS uk ON tgp.id_unit=uk.id_unit
+    WHERE id_tanggapan=%d', $_id_tanggapan);
     $_tanggapan_d = $_tanggapan_q->fetch_assoc();
-    $_disposisi_q = $simbio->dbQuery('SELECT * FROM {disposisi} WHERE id_disposisi=%d', $_tanggapan_d['id_disposisi']);
-    $_disposisi_d = $_disposisi_q->fetch_assoc();
 
     if ($_disposisi_d['no_disposisi'] && $_disposisi_d['perintah']) {
       $simbio->addInfo('TANGGAPAN_BARU_INFO', sprintf('Anda akan memberikan tanggapan untuk disposisi nomor <strong>%s</strong>', $_disposisi_d['no_disposisi']));
     } else {
-			if (!User::isUserLogin('ubah tanggapan')) {
-        // return;
-			}
-      $simbio->addInfo('TANGGAPAN_UPDATE_INFO', sprintf('Anda akan mengubah data tanggapan untuk disposisi nomor <strong>%s</strong>', $_disposisi_d['no_disposisi']));
+      $simbio->addInfo('TANGGAPAN_UPDATE_INFO', sprintf('Anda akan mengubah data tanggapan berikut'));
     }
 
     // set token
@@ -1406,6 +1379,7 @@ class Disposisi extends SimbioModel {
     $_form_items[] = array('id' => 'tanggapan', 'label' => __('Tanggapan'), 'type' => 'textarea', 'size' => '10000',
       'description' => 'Tanggapan terhadap disposisi', 'class' => 'input-xxlarge', 'value' => $_tanggapan_d['tanggapan']);
 
+
     $_staf_unit_kerja = array();
     $_staf_unit_kerja_data = $this->dataStafUnitKerjaDisposisi($simbio, isset($_SESSION['User']['UnitKerja'])?$_SESSION['User']['UnitKerja']:1);
     foreach ($_staf_unit_kerja_data as $_staf) {
@@ -1417,32 +1391,29 @@ class Disposisi extends SimbioModel {
       'options' => $_staf_unit_kerja,
       'value' => '');
 
+
     // ID Disposisi
     if ($_id_disposisi > 0) {
-      $_form_items[] = array('id' => 'disposisi', 'type' => 'hidden', 'value' => $_id_disposisi);
+    $_form_items[] = array('id' => 'disposisi', 'type' => 'hidden', 'value' => $_id_disposisi);
     } else if ($_tanggapan_d['id_disposisi'] > 0) {
-      $_form_items[] = array('id' => 'disposisi', 'type' => 'hidden', 'value' => $_tanggapan_d['id_disposisi']);
+    $_form_items[] = array('id' => 'disposisi', 'type' => 'hidden', 'value' => $_tanggapan_d['id_disposisi']);
     }
 
     if ($_id_tanggapan > 0) {
-      $_form_items[] = array('id' => 'update', 'type' => 'hidden', 'value' => $_id_tanggapan);
+     $_form_items[] = array('id' => 'update', 'type' => 'hidden', 'value' => $_id_tanggapan);
     }
 
     // set form token
     $_form_items[] = array('id' => 'tkn', 'type' => 'hidden', 'value' => $_SESSION['token']);
     foreach ($_form_items as $_item) {
-      $_form->add($_item);
+    $_form->add($_item);
     }
 
     $_form_output = $_form->build();
 
     $_output .= $_form_output;
 
-		if ($_id_disposisi > 0) {
-      return $_output;
-		} else {
-			$simbio->loadView($_output, 'Update Tanggapan Disposisi');
-		}
+    return $_output;
     // load main content again
     // $simbio->loadView($_output, 'Update Tanggapan Disposisi');
   }
