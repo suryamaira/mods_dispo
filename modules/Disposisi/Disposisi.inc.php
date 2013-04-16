@@ -107,7 +107,7 @@ class Disposisi extends SimbioModel {
     $_fields['Nomor'] = 'no_surat';
     $_fields['Perihal'] = 'perihal';
     $_fields['Pengirim'] = 'pengirim';
-    $_fields['Tgl. surat'] = 'tgl_surat';
+    $_fields['Tgl. surat'] = "DATE_FORMAT(tgl_surat,'%d-%m-%Y')";
     // $_fields['Tgl. terima'] = 'tgl_terima';
     $_fields['Kode disposisi'] = 'no_disposisi';
     $_fields['Disposisi'] = 'disposisi';
@@ -191,7 +191,7 @@ class Disposisi extends SimbioModel {
     $_fields['No. Disposisi'] = 'no_disposisi';
     $_fields['Perihal'] = 's.perihal';
     $_fields['Status'] = 'st.status';
-    $_fields['Tgl. Disposisi'] = 'tgl_disposisi';
+    $_fields['Tgl. Disposisi'] = "DATE_FORMAT(tgl_disposisi,'%d-%m-%Y')";
     $_fields['Tanggapan'] = 'tanggapan';
     // set column to view in datagrid
     $_datagrid->setSQLColumn($_fields);
@@ -216,7 +216,7 @@ class Disposisi extends SimbioModel {
     $_action_options[] = array('disposisi/hapusdisposisi', 'Hapus rekod terpilih');
     $_datagrid->setActionOptions($_action_options);
     // set result ordering
-    $_datagrid->setSQLOrder('d.id_surat ASC, tgl_disposisi DESC');
+    $_datagrid->setSQLOrder('d.tgl_disposisi DESC');
     // set callback
     $_datagrid->modifyColumnContent('Tanggapan', 'callback{Disposisi::cbStatusTanggapan}');
 
@@ -276,7 +276,7 @@ class Disposisi extends SimbioModel {
     $_fields['No. Disposisi'] = 'd.no_disposisi';
     $_fields['Perihal'] = 's.perihal';
     $_fields['Tanggapan'] = 't.tanggapan';
-    $_fields['Tgl. Disposisi'] = 'd.tgl_disposisi';
+    $_fields['Tgl. Disposisi'] = "DATE_FORMAT(d.tgl_disposisi,'%d-%m-%Y')";
     // set column to view in datagrid
     $_datagrid->setSQLColumn($_fields);
     // set primary key for detail view
@@ -419,9 +419,9 @@ class Disposisi extends SimbioModel {
     $_detail .= '<div class="row"><div class="span3 detail-label">'.__('Pengirim').'</div><div class="span8 detail-content">'.$_surat_d['pengirim'].'</div></div>';
     $_detail .= '<div class="row"><div class="span3 detail-label">'.__('Kepada').'</div><div class="span8 detail-content">'.$_surat_d['kepada'].'</div></div>';
     $_detail .= '<div class="row"><div class="span3 detail-label">'.__('Perihal').'</div><div class="span8 detail-content">'.$_surat_d['perihal'].'</div></div>';
-    $_detail .= '<div class="row"><div class="span3 detail-label">'.__('Tanggal surat').'</div><div class="span8 detail-content">'.$_surat_d['tgl_surat'].'</div></div>';
-    $_detail .= '<div class="row"><div class="span3 detail-label">'.__('Tanggal terima').'</div><div class="span8 detail-content">'.$_surat_d['tgl_terima'].'</div></div>';
-    $_detail .= '<div class="row"><div class="span3 detail-label">'.__('Tanggal proses').'</div><div class="span8 detail-content">'.$_surat_d['tgl_proses'].'</div></div>';
+    $_detail .= '<div class="row"><div class="span3 detail-label">'.__('Tanggal surat').'</div><div class="span8 detail-content">'.$this->ubahFormatTanggal($_surat_d['tgl_surat']).'</div></div>';
+    $_detail .= '<div class="row"><div class="span3 detail-label">'.__('Tanggal terima').'</div><div class="span8 detail-content">'.$this->ubahFormatTanggal($_surat_d['tgl_terima']).'</div></div>';
+    $_detail .= '<div class="row"><div class="span3 detail-label">'.__('Tanggal proses').'</div><div class="span8 detail-content">'.$this->ubahFormatTanggal($_surat_d['tgl_proses']).'</div></div>';
     $_detail .= '<div class="row"><div class="span3 detail-label">'.__('File surat').'</div><div class="span8 detail-content">';
 
     // query data file terkait surat ke database
@@ -491,7 +491,7 @@ class Disposisi extends SimbioModel {
     }
 
     $_detail .= '</div></div>';
-    $_detail .= '<div class="row"><div class="span3 detail-label">'.__('Tanggal Disposisi').'</div><div class="span8 detail-content">'.$_disposisi_d['tgl_disposisi'].'</div></div>';
+    $_detail .= '<div class="row"><div class="span3 detail-label">'.__('Tanggal Disposisi').'</div><div class="span8 detail-content">'.$this->ubahFormatTanggal($_disposisi_d['tgl_disposisi']).'</div></div>';
     $_detail .= '<div class="row"><div class="span3 detail-label">'.__('File surat').'</div><div class="span8 detail-content">';
 
     // query data file terkait surat ke database
@@ -519,7 +519,7 @@ class Disposisi extends SimbioModel {
       // query data tanggapan terkait disposisi ke database
       $_tanggapan .= '<table id="daftarTanggapan" class="table table-striped table-bordered table-condensed">';
       foreach ($this->dataTanggapanDisposisi($simbio, $_id_disposisi) as $_data_tanggapan) {
-        $_tanggapan .= '<tr><th><span class="tanggapan-nama-unit">'.$_data_tanggapan['nama_unit'].'</span> pada <span class="tanggapan-tgl">'.$_data_tanggapan['tgl_dibuat'].'</span></th></tr>'."\n";
+        $_tanggapan .= '<tr><th><span class="tanggapan-nama-unit">'.$_data_tanggapan['nama_unit'].'</span> pada <span class="tanggapan-tgl">'.$this->ubahFormatTanggal($_data_tanggapan['tgl_dibuat']).'</span></th></tr>'."\n";
         $_tanggapan .= '<tr><td class="tanggapan-isi">'.$_data_tanggapan['tanggapan'].'</td></tr>'."\n";
       }
       $_tanggapan .= '</table>';
@@ -619,7 +619,7 @@ class Disposisi extends SimbioModel {
       // load php mailer
       $simbio->loadLibrary('phpmailer', 'libraries/phpmailer/class.phpmailer.php');
       // ambil data pendaftar
-      $_pesan = "Surat masuk No. <b>".$_s['no_surat']."</b>, tertanggal <b>".$_s['tgl_surat']."</b>, dari <b>".$_s['pengirim']."</b>, perihal ".$_s['perihal']." siap dibuatkan disposisi.";
+      $_pesan = "Surat masuk No. <b>".$_s['no_surat']."</b>, tertanggal <b>".$this->ubahFormatTanggal($_s['tgl_surat'])."</b>, dari <b>".$_s['pengirim']."</b>, perihal ".$_s['perihal']." siap dibuatkan disposisi.";
       $_d = array( 'email' => isset($_args[1])?$_args[1]:$this->global['unit_head_email'], 'nama' => 'KaSubDit Pengadaan Tanah',
             'id_login' => "Sekretaris", 'pesan' => $_pesan,
             'kode' => "Hash code" );
@@ -660,7 +660,7 @@ class Disposisi extends SimbioModel {
         FROM {surat_masuk} AS s
         LEFT JOIN {disposisi} as d ON d.id_surat = s.id_surat WHERE d.id_disposisi=%d', $int_id_disposisi);
       $_s = $_q->fetch_assoc();
-      $_pesan = "Disposisi Pimpinan untuk Anda terkait Surat No. <b>".$_s['no_surat']."</b>, tertanggal <b>".$_s['tgl_surat']."</b>, dari <b>".$_s['pengirim']."</b>, perihal '".$_s['perihal']."' dengan perintah: '<quote>". $_s['perintah']. "</quote>' telah dibuat. Mohon untuk ditindaklanjuti.";
+      $_pesan = "Disposisi Pimpinan untuk Anda terkait Surat No. <b>".$_s['no_surat']."</b>, tertanggal <b>".$this->ubahFormatTanggal($_s['tgl_surat'])."</b>, dari <b>".$_s['pengirim']."</b>, perihal '".$_s['perihal']."' dengan perintah: '<quote>". $_s['perintah']. "</quote>' telah dibuat. Mohon untuk ditindaklanjuti.";
 
       // load php mailer
       $simbio->loadLibrary('phpmailer', 'libraries/phpmailer/class.phpmailer.php');
@@ -717,7 +717,7 @@ class Disposisi extends SimbioModel {
         LEFT JOIN {file_surat} as f ON f.id_file = sf.id_file
         WHERE d.id_disposisi=%d', $_args[0]);
       while ($_s = $_q->fetch_assoc()) {
-		$_pesan = "Disposisi Pimpinan untuk Anda terkait Surat No. <b>".$_s['no_surat']."</b>, tertanggal <b>".$_s['tgl_surat']."</b>, dari <b>".$_s['pengirim']."</b>, perihal '".$_s['perihal']."' dengan perintah: '<quote>". $_s['perintah']. "</quote>' telah dibuat.";
+		$_pesan = "Disposisi Pimpinan untuk Anda terkait Surat No. <b>".$_s['no_surat']."</b>, tertanggal <b>".$this->ubahFormatTanggal($_s['tgl_surat'])."</b>, dari <b>".$_s['pengirim']."</b>, perihal '".$_s['perihal']."' dengan perintah: '<quote>". $_s['perintah']. "</quote>' telah dibuat.";
 		$_attach[] = $_s['namafile'];
 	  }
 
@@ -780,7 +780,7 @@ class Disposisi extends SimbioModel {
       // load php mailer
       $simbio->loadLibrary('phpmailer', 'libraries/phpmailer/class.phpmailer.php');
       // ambil data pendaftar
-      $_pesan = "Harap siapkan lembar disposisi untuk ditandatangani terkait: <br />Surat masuk No. <b>".$_s['no_surat']."</b>, tertanggal <b>".$_s['tgl_surat']."</b>, dari <b>".$_s['pengirim']."</b>, perihal '".$_s['perihal'].".'";
+      $_pesan = "Harap siapkan lembar disposisi untuk ditandatangani terkait: <br />Surat masuk No. <b>".$_s['no_surat']."</b>, tertanggal <b>".$this->ubahFormatTanggal($_s['tgl_surat'])."</b>, dari <b>".$_s['pengirim']."</b>, perihal '".$_s['perihal'].".'";
       $_d = array( 'email' => $this->global['unit_head_email'], 'nama' => 'Sekretaris KaSubDit',
         'id_login' => "Sekretaris", 'pesan' => $_pesan,
         'kode' => "Hash code" );
@@ -972,7 +972,7 @@ class Disposisi extends SimbioModel {
 	$c=0;
 	$_statistic .= 'Menampilakan 10 surat terbaru<br />';
 	while ($_result_d = $_result_q->fetch_assoc() AND $c < 10) {
-		$_statistic .= '<li>Tgl '.$_result_d['tgl_surat'].' dari '.$_result_d['pengirim']. ' tentang '.$_result_d['perihal'].'</li>';
+		$_statistic .= '<li>Tgl '.$this->ubahFormatTanggal($_result_d['tgl_surat']).' dari '.$_result_d['pengirim']. ' tentang '.$_result_d['perihal'].'</li>';
 		$c = $c + 1;
 	}
 	$_statistic .='</ul></div></div></div>';
@@ -990,7 +990,7 @@ class Disposisi extends SimbioModel {
 	$c=0;
 	$_statistic .= 'Menampilakan 10 surat terbaru belum ada disposisi<br />';
 	while ($_result_d = $_result_q->fetch_assoc() AND $c < 10) {
-		$_statistic .= '<li>Tgl '.$_result_d['tgl_surat'].' dari '.$_result_d['pengirim']. ' tentang '.$_result_d['perihal'].'</li>';
+		$_statistic .= '<li>Tgl '.$this->ubahFormatTanggal($_result_d['tgl_surat']).' dari '.$_result_d['pengirim']. ' tentang '.$_result_d['perihal'].'</li>';
 		$c = $c + 1;
 	}
 	$_statistic .='</ul></div></div></div>';
@@ -1730,7 +1730,7 @@ class Disposisi extends SimbioModel {
    * @param   string    $str_tanggal
    * @return  string
    */
-  public static function ubahFormatTanggal($str_tanggal) {
+  public function ubahFormatTanggal($str_tanggal) {
     return date('d-m-Y', strtotime($str_tanggal));
   }
 
