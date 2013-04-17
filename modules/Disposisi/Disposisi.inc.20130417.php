@@ -1438,11 +1438,11 @@ class Disposisi extends SimbioModel {
 
     $_output .= $_form_output;
 
-	if ($_id_disposisi > 0) {
-		return $_output;
-	} else {
-		$simbio->loadView($_output, 'Update Tanggapan Disposisi');
-	}
+		if ($_id_disposisi > 0) {
+      return $_output;
+		} else {
+			$simbio->loadView($_output, 'Update Tanggapan Disposisi');
+		}
     // load main content again
     // $simbio->loadView($_output, 'Update Tanggapan Disposisi');
   }
@@ -1708,11 +1708,6 @@ class Disposisi extends SimbioModel {
 			$simbio->writeLogs('Disposisi', 'Data tanggapan berhasil dimasukkan ke dalam database', 'TANGGAPAN_INSERT_SUCCESS');
 			// set flag sudah di tanggapi pada data disposisi
 			$simbio->dbQuery('UPDATE {disposisi} SET tanggapan=1 WHERE id_disposisi=%d', $_data['id_disposisi']);
-			if (isset($_POST['staf']) AND count($_POST['staf'])>0) {
-				$_delegasi = $_data['id_disposisi'];
-				$_delegasi .= '/'.implode("/",$_POST['staf']);
-				$_emailStaf = $this->kirimEmailStaf(&$simbio, $_delegasi);
-			}
 		  }
 	  } else if (isset($_POST['staf']) AND count($_POST['staf'])>0) {
 		  $_delegasi = $_data['id_disposisi'];
@@ -1748,9 +1743,5 @@ class Disposisi extends SimbioModel {
    */
   private function validasiData($arr_data, &$str_error) {
     return true;
-  }
-
-  public function testUnitEmail(&$simbio,$str_args) {
-	  $this->kirimEmailStaf(&$simbio,"97/ptriwibowo@gmail.com/wynerst@live.com");
   }
 }
