@@ -1749,8 +1749,4 @@ class Disposisi extends SimbioModel {
   private function validasiData($arr_data, &$str_error) {
     return true;
   }
-
-  public function testUnitEmail(&$simbio,$str_args) {
-	  $this->kirimEmailStaf(&$simbio,"97/ptriwibowo@gmail.com/wynerst@live.com");
-  }
 }
