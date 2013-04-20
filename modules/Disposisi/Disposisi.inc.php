@@ -1141,7 +1141,7 @@ class Disposisi extends SimbioModel {
         LEFT JOIN {file_surat} AS f ON sf.id_file=f.id_file
         WHERE sf.id_surat=%d', $_updateID);
       while ($_data_surat = $_file_surat_q->fetch_assoc()) {
-        $_file_surat_content .= '<tr id="file_'.$_data_surat['id_file'].'"><td>'.$_data_surat['namafile'].'</td><td>'.( round($_data_surat['file_size']/(1024*1024), 2) ).' MB</td><td><a class="btn btn-mini btn-danger hapusFile" target="uploadTarget" href="./index.php?p=Disposisi/hapusfileupload" fileid="'.$_data_surat['id_file'].'">Hapus</a></td></tr>';
+        $_file_surat_content .= '<tr id="file_'.$_data_surat['id_file'].'"><td>'.$_data_surat['namafile'].'</td><td>'.( round($_data_surat['file_size']/(1024*1024), 2) ).' MB</td><td><a class="btn btn-mini btn-danger hapusFile" target="uploadTarget" href="./index.php?p=Disposisi/hapusfileupload" fileid="'.$_data_surat['id_file'].'">Hapus</a> <a class="btn btn-mini btn-info" target="blank" href="./files/surat/'.$_data_surat['namafile'].'">Baca/Lihat</a></td></tr>';
       }
     }
     $_file_surat_content .= '</table>';
@@ -1314,44 +1314,48 @@ class Disposisi extends SimbioModel {
     $_ids = explode('/', $str_args);
     // ID Surat
     $_id_surat = (integer)trim($_ids[0]);
-    $_surat_q = $simbio->dbQuery('SELECT * FROM {surat_masuk} WHERE id_surat=%d', $_id_surat);
+    $_surat_q = $simbio->dbQuery('SELECT s.*, d.no_disposisi FROM {surat_masuk} AS s LEFT JOIN {disposisi} AS d ON s.id_surat=d.id_surat WHERE s.id_surat=%d', $_id_surat);
     $_surat_d = $_surat_q->fetch_assoc();
     $_id_disposisi = 0;
 
-    if ($_surat_d['perihal'] && $_surat_d['pengirim']) {
-      $simbio->addInfo('DISPOSISI_BARU_INFO', sprintf('Anda akan memberikan kode disposisi untuk surat dengan perihal <strong class="perihal">%s</strong>
-        yang dikirim oleh <strong class="pengirim">%s</strong>', $_surat_d['perihal'], $_surat_d['pengirim']));
-    }
+	if ($_surat_d['no_disposisi'] <> "") {
+		$this->index(&$simbio,'');
+	} else {
+		if ($_surat_d['perihal'] && $_surat_d['pengirim']) {
+		  $simbio->addInfo('DISPOSISI_BARU_INFO', sprintf('Anda akan memberikan kode disposisi untuk surat dengan perihal <strong class="perihal">%s</strong>
+			yang dikirim oleh <strong class="pengirim">%s</strong>', $_surat_d['perihal'], $_surat_d['pengirim']));
+		}
 
-    // set token
-    $_SESSION['token'] = Utility::generateRandomString(20);
+		// set token
+		$_SESSION['token'] = Utility::generateRandomString(20);
 
-    // Form data entry disposisi
-    $_form = new FormOutput('disposisi', $this->global['base_url'].'/index.php?p=disposisi/simpandisposisi', 'post');
-    $_form->submitName = 'tambahBaru';
-    $_form->submitValue = __('Simpan Disposisi');
-    // define form elements
-    $_form_items[] = array('id' => 'no_surat', 'label' => __('Nomor'), 'type' => 'text', 'size' => '45',
-      'class' => 'input-xlarge', 'value' => $_surat_d['no_surat'], 'attr' => array('readonly' => 'readonly'),
-      'required' => 1);
-    $_form_items[] = array('id' => 'no_disposisi', 'label' => __('Kode Disposisi'), 'type' => 'text', 'size' => '45',
-      'class' => 'input-xlarge', 'required' => 1);
-    // ID surat
-    $_form_items[] = array('id' => 'surat', 'type' => 'hidden', 'value' => $_id_surat);
-    $_form_items[] = array('id' => 'updateKodeDisposisi', 'type' => 'hidden', 'value' => 1);
+		// Form data entry disposisi
+		$_form = new FormOutput('disposisi', $this->global['base_url'].'/index.php?p=disposisi/simpandisposisi', 'post');
+		$_form->submitName = 'tambahBaru';
+		$_form->submitValue = __('Simpan Disposisi');
+		// define form elements
+		$_form_items[] = array('id' => 'no_surat', 'label' => __('Nomor'), 'type' => 'text', 'size' => '45',
+		  'class' => 'input-xlarge', 'value' => $_surat_d['no_surat'], 'attr' => array('readonly' => 'readonly'),
+		  'required' => 1);
+		$_form_items[] = array('id' => 'no_disposisi', 'label' => __('Kode Disposisi'), 'type' => 'text', 'size' => '45',
+		  'class' => 'input-xlarge', 'required' => 1);
+		// ID surat
+		$_form_items[] = array('id' => 'surat', 'type' => 'hidden', 'value' => $_id_surat);
+		$_form_items[] = array('id' => 'updateKodeDisposisi', 'type' => 'hidden', 'value' => 1);
 
-    // set form token
-    $_form_items[] = array('id' => 'tkn', 'type' => 'hidden', 'value' => $_SESSION['token']);
-    foreach ($_form_items as $_item) {
-      $_form->add($_item);
-    }
+		// set form token
+		$_form_items[] = array('id' => 'tkn', 'type' => 'hidden', 'value' => $_SESSION['token']);
+		foreach ($_form_items as $_item) {
+		  $_form->add($_item);
+		}
 
-    $_form_output = $_form->build();
+		$_form_output = $_form->build();
 
-    $_output .= $_form_output;
+		$_output .= $_form_output;
 
-    // load main content again
-    $simbio->loadView($_output, 'Update Kode Disposisi');
+		// load main content again
+		$simbio->loadView($_output, 'Update Kode Disposisi');
+	}
   }
 
 
